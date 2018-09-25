@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Friend Finder</title>
+
+     <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+</head>
+<body>
+
+    <div class="container mt-3 mb-5">
+
+            <div class="jumbotron jumbotron-fluid">
+                <div class="container">
+                    <h1 class="display-4">Friend Finder Survey</h1>
+                    <p class="lead">Take this survey to find out who you're most compatible with.</p>
+                </div>
+            </div>
+
+
+        <form id="form">
+            <div class="form-group">
+                <label for="formGroupExampleInput"><h4>Name</h4></label>
+                <input type="text" class="form-control" id="name-field" placeholder="Enter name" name="name">
+            </div>
+            <div class="form-group">
+                <label for="formGroupExampleInput2"><h4>Photo</h4></label>
+                <input type="text" class="form-control" id="image-field" placeholder="URL to image of yourself" name="image">
+            </div>
+            <br>
+        </form>
+
+        <div id="main-questions"></div>
+        <!-- Button trigger modal -->
+        <button type="button" class="btn btn-lg btn-primary"  data-target="#modal" id="submit-button">
+        Submit
+      </button>
+      <!-- Modal -->
+      <div class="modal fade" id="modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">You Matched With...</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                </div>
+                <div class="modal-body">
+                    <h6 class="friend-name"></h6>
+                    <img scr="" class="friend-image" style="max-width:90%" >
+                    
+               
+                </div>
+                <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+            </div>
+        </div>
+      
+
+    </div>
+
+
+    <script type="text/javascript">
+
+        // ================================================================================
+        // VARIABLES
+        // ================================================================================
+
+        let questionsArray = [
+            "Your mind is always buzzing with unexplored ideas and plans.",
+            "Generally speaking, you rely more on your experience than your imagination.",
+            "You find it easy to stay relaxed and focused even when there is some pressure.",
+            "You rarely do something just out of sheer curiosity.",
+            "People can rarely upset you.",
+            "It is often difficult for you to relate to other people’s feelings.",
+            "In a discussion, truth should be more important than people’s sensitivities.",
+            "You rarely get carried away by fantasies and ideas.",
+            "You think that everyone’s views should be respected regardless of whether they are supported by facts or not.",
+            "You feel more energetic after spending time with a group of people."
+        ]
+
+        let mostCompatible = '';
+
+
+        // ================================================================================
+        // FUNCTION DECLARATIONS
+        // ================================================================================
+
+        //Dynamically create all the questions and add them to the page
+        function createQuestions(){
+
+            for (let i=0; i< questionsArray.length; i++){
+
+                let question = `
+                    <div>
+                        <h4>Question ${i+1}</h4>
+                        <h5>${questionsArray[i]}</h5>
+                        <div class="form-group">
+                            <select class="form-control" id="${i}">
+                                <option value="1">1 (Strongly Disagree)</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5 (Strongly Agree)</option>
+                            </select>
+                        </div>
+                        <br>
+                    </div>
+                `;
+
+                $('#main-questions').append(question);
+            };
+        }
+
+        //Compare each person and return their overall score
+        function comparePeople(person1, person2){
+            let score = 0;
+            for(let i=0; i< questionsArray.length; i++){
+                score += compareScore(person1.scores[i], person2.scores[i]);
+            }
+            return score;
+        }
+
+        //Compare two individual scores
+        function compareScore(num1, num2){
+            return Math.abs(num1-num2);
+        }
+
+        //Extending the Array object to find a minimum value in an array
+        Array.min = function(array){
+            return Math.min.apply(Math, array);
+        };
+
+        function showModal(friend)
+        {
+            //If the friend object is not empty, show the modal with the name and image
+            if (friend){
+                $(".friend-name").html(friend.name);
+                $('.friend-image').attr('src', friend.photo);
+            }
+            else{
+                $(".friend-name").html("Oops! No friends yet!"); //Display when the friend object is empty if it's the first friend added
+            }
+            $('#modal').modal('show');
+            
+        }
+
+
+        // ================================================================================
+        // APP LOGIC
+        // ================================================================================
+
+        createQuestions(); //Create all questions and add to the page
+
+        //Submit button handler 
+        $(document).on('click', '#submit-button', function(){
+
+            //Declare variables for the friend object 
+            let name = $('#name-field').val().trim();
+            let image = $('#image-field').val().trim();
+
+            let containsImg = false;
+
+            if (image.includes('.jpg') || image.includes('.jpeg') || image.includes('.png')){
+                containsImg = true;
+            }
+               
+            if (name && containsImg){
+
+                let answersArray = [];
+                for(let i=0; i< questionsArray.length; i++){
+
+                    let selectedOption = parseInt( $(`#${i}`).find("option:selected").val() ) ;
+                    answersArray.push(selectedOption);
+                }
+                
+                //Create the friend object 
+                let currentFriend = {
+                    "name": name,
+                    "photo": image,
+                    "scores": answersArray
+                
+                };
+
+                //Pull all the previous friend objects and compare for compatibility 
+                $.get("/api/friends", function(data){
+
+                    let allFriends = data;
+                    let friendScores = [];
+
+                    allFriends.forEach(function (friend){
+                        let curScore = comparePeople(currentFriend, friend);
+                        friendScores.push(curScore);
+
+                    })
+
+                    let minScore = Array.min(friendScores); //Find the lowest comparison in the array
+
+                    let minIndex = friendScores.findIndex(function(element){
+                        return element === minScore;
+                    }); //Find the index of the object of the lowest score
+
+                    mostCompatible = allFriends[minIndex];
+
+
+                    //Post the friend object 
+                    $.post("/api/friends", currentFriend, function(data){
+                        console.log("POST success!");
+                    }).then(function(){
+                        showModal(mostCompatible);
+                    });
+                });
+
+                
+
+            }
+            else{ //If name was not entered or a bad link, do not show modal
+                $("#modal").modal('hide');
+                alert("Please enter all fields in the correct format!")
+            }
+
+
+        });
+
+    
+    
+    
+    </script>
+      
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+</body>
+</html>
